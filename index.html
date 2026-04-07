@@ -1,1 +1,592 @@
+<!DOCTYPE html>
 
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contador de Sushi</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;700&family=Zen+Kaku+Gothic+New:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --red: #C0392B;
+    --dark-red: #922b21;
+    --cream: #FAF3E8;
+    --dark: #1a1008;
+    --gold: #D4A847;
+    --ink: #2C1810;
+  }
+
+- { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+background-color: var(–dark);
+font-family: ‘Zen Kaku Gothic New’, sans-serif;
+min-height: 100vh;
+display: flex;
+flex-direction: column;
+align-items: center;
+justify-content: center;
+overflow: hidden;
+position: relative;
+user-select: none;
+cursor: pointer;
+}
+
+/* Japanese paper texture background */
+body::before {
+content: ‘’;
+position: fixed;
+inset: 0;
+background:
+radial-gradient(ellipse at 20% 80%, rgba(192,57,43,0.15) 0%, transparent 50%),
+radial-gradient(ellipse at 80% 20%, rgba(212,168,71,0.08) 0%, transparent 50%),
+radial-gradient(ellipse at 50% 50%, rgba(44,24,16,0.8) 0%, transparent 80%);
+pointer-events: none;
+z-index: 0;
+}
+
+/* Subtle grid lines */
+body::after {
+content: ‘’;
+position: fixed;
+inset: 0;
+background-image:
+linear-gradient(rgba(212,168,71,0.04) 1px, transparent 1px),
+linear-gradient(90deg, rgba(212,168,71,0.04) 1px, transparent 1px);
+background-size: 60px 60px;
+pointer-events: none;
+z-index: 0;
+}
+
+.container {
+position: relative;
+z-index: 1;
+display: flex;
+flex-direction: column;
+align-items: center;
+gap: 0;
+}
+
+/* Decorative kanji header */
+.kanji-label {
+font-family: ‘Noto Serif JP’, serif;
+font-size: 0.75rem;
+letter-spacing: 0.4em;
+color: var(–gold);
+opacity: 0.7;
+text-transform: uppercase;
+margin-bottom: 8px;
+}
+
+.title {
+font-family: ‘Noto Serif JP’, serif;
+font-size: 2.2rem;
+font-weight: 300;
+color: var(–cream);
+letter-spacing: 0.15em;
+text-align: center;
+margin-bottom: 4px;
+}
+
+.subtitle {
+font-size: 0.7rem;
+letter-spacing: 0.35em;
+color: var(–gold);
+opacity: 0.5;
+margin-bottom: 36px;
+}
+
+/* Main controls row */
+.controls-row {
+display: flex;
+align-items: center;
+gap: 20px;
+}
+
+/* +/- action buttons */
+.action-btn {
+width: 72px;
+height: 72px;
+border-radius: 50%;
+border: none;
+display: flex;
+align-items: center;
+justify-content: center;
+font-size: 2rem;
+font-weight: 300;
+cursor: pointer;
+-webkit-tap-highlight-color: transparent;
+transition: transform 0.1s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.15s ease, background 0.15s ease;
+line-height: 1;
+font-family: ‘Noto Serif JP’, serif;
+}
+
+.btn-minus {
+background: rgba(192,57,43,0.12);
+color: #e07060;
+box-shadow: 0 0 0 1.5px rgba(192,57,43,0.35), 0 8px 24px rgba(0,0,0,0.4);
+}
+
+.btn-minus:active, .btn-minus.pressed {
+transform: scale(0.88);
+background: rgba(192,57,43,0.25);
+box-shadow: 0 0 0 2px rgba(192,57,43,0.6), 0 4px 12px rgba(0,0,0,0.4);
+}
+
+.btn-plus {
+background: rgba(212,168,71,0.12);
+color: var(–gold);
+box-shadow: 0 0 0 1.5px rgba(212,168,71,0.35), 0 8px 24px rgba(0,0,0,0.4);
+}
+
+.btn-plus:active, .btn-plus.pressed {
+transform: scale(0.88);
+background: rgba(212,168,71,0.25);
+box-shadow: 0 0 0 2px rgba(212,168,71,0.6), 0 4px 12px rgba(0,0,0,0.4);
+}
+
+/* Main tap zone */
+.tap-area {
+position: relative;
+width: 220px;
+height: 220px;
+display: flex;
+align-items: center;
+justify-content: center;
+cursor: pointer;
+}
+
+/* Outer ring */
+.ring-outer {
+position: absolute;
+inset: 0;
+border-radius: 50%;
+border: 1px solid rgba(212,168,71,0.2);
+transition: transform 0.3s ease, border-color 0.3s ease;
+}
+
+.ring-middle {
+position: absolute;
+inset: 12px;
+border-radius: 50%;
+border: 1px solid rgba(192,57,43,0.25);
+transition: transform 0.3s ease;
+}
+
+.ring-inner {
+position: absolute;
+inset: 24px;
+border-radius: 50%;
+border: 2px solid rgba(192,57,43,0.15);
+}
+
+/* Main sushi button */
+.sushi-btn {
+position: relative;
+width: 148px;
+height: 148px;
+border-radius: 50%;
+background: radial-gradient(circle at 35% 35%, #e8ddd0, var(–cream) 60%, #d4c9b8);
+display: flex;
+align-items: center;
+justify-content: center;
+font-size: 4.5rem;
+box-shadow:
+0 0 0 3px rgba(192,57,43,0.4),
+0 0 40px rgba(192,57,43,0.2),
+0 20px 60px rgba(0,0,0,0.6),
+inset 0 -4px 12px rgba(0,0,0,0.15),
+inset 0 4px 8px rgba(255,255,255,0.6);
+transition:
+transform 0.1s cubic-bezier(0.34, 1.56, 0.64, 1),
+box-shadow 0.15s ease;
+cursor: pointer;
+-webkit-tap-highlight-color: transparent;
+}
+
+.sushi-btn:active,
+.sushi-btn.pressed {
+transform: scale(0.91);
+box-shadow:
+0 0 0 3px rgba(192,57,43,0.6),
+0 0 60px rgba(192,57,43,0.35),
+0 8px 24px rgba(0,0,0,0.5),
+inset 0 -2px 6px rgba(0,0,0,0.1),
+inset 0 2px 4px rgba(255,255,255,0.4);
+}
+
+.tap-area:active .ring-outer,
+.tap-area.pressed .ring-outer {
+transform: scale(1.06);
+border-color: rgba(212,168,71,0.5);
+}
+
+.tap-area:active .ring-middle,
+.tap-area.pressed .ring-middle {
+transform: scale(1.04);
+border-color: rgba(192,57,43,0.5);
+}
+
+/* Side labels */
+.btn-label {
+font-size: 0.55rem;
+letter-spacing: 0.3em;
+opacity: 0.45;
+margin-top: 8px;
+text-align: center;
+}
+.btn-label-minus { color: #e07060; }
+.btn-label-plus  { color: var(–gold); }
+
+.btn-col {
+display: flex;
+flex-direction: column;
+align-items: center;
+}
+
+/* Counter display */
+.counter-wrap {
+margin-top: 44px;
+text-align: center;
+position: relative;
+}
+
+.count-label {
+font-size: 0.65rem;
+letter-spacing: 0.5em;
+color: var(–gold);
+opacity: 0.6;
+margin-bottom: 6px;
+}
+
+.count {
+font-family: ‘Noto Serif JP’, serif;
+font-size: 6rem;
+font-weight: 700;
+color: var(–cream);
+line-height: 1;
+letter-spacing: -0.02em;
+position: relative;
+display: inline-block;
+min-width: 120px;
+text-align: center;
+transition: transform 0.08s ease;
+}
+
+.count.bump-up {
+animation: bump-up 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.count.bump-down {
+animation: bump-down 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes bump-up {
+0% { transform: scale(1); }
+40% { transform: scale(1.18); color: #D4A847; }
+100% { transform: scale(1); }
+}
+@keyframes bump-down {
+0% { transform: scale(1); }
+40% { transform: scale(1.12); color: #e07060; }
+100% { transform: scale(1); }
+}
+
+.count-unit {
+font-family: ‘Noto Serif JP’, serif;
+font-size: 0.9rem;
+color: var(–gold);
+opacity: 0.7;
+letter-spacing: 0.25em;
+margin-top: 4px;
+}
+
+/* Red divider line */
+.divider {
+width: 40px;
+height: 2px;
+background: linear-gradient(90deg, transparent, var(–red), transparent);
+margin: 24px auto 0;
+opacity: 0.8;
+}
+
+/* Reset button */
+.reset-btn {
+margin-top: 28px;
+background: none;
+border: 1px solid rgba(212,168,71,0.3);
+color: rgba(212,168,71,0.5);
+font-family: ‘Zen Kaku Gothic New’, sans-serif;
+font-size: 0.65rem;
+letter-spacing: 0.35em;
+padding: 8px 24px;
+cursor: pointer;
+border-radius: 2px;
+transition: all 0.2s ease;
+text-transform: uppercase;
+}
+
+.reset-btn:hover {
+border-color: rgba(192,57,43,0.6);
+color: rgba(192,57,43,0.8);
+background: rgba(192,57,43,0.05);
+}
+
+/* Floating +1 particles */
+.particle {
+position: fixed;
+font-family: ‘Noto Serif JP’, serif;
+font-size: 1.4rem;
+font-weight: 700;
+color: var(–gold);
+pointer-events: none;
+z-index: 100;
+animation: float-up 0.85s ease-out forwards;
+text-shadow: 0 0 20px rgba(212,168,71,0.6);
+}
+
+@keyframes float-up {
+0%   { opacity: 1; transform: translateY(0) scale(1); }
+60%  { opacity: 0.9; transform: translateY(-55px) scale(1.2); }
+100% { opacity: 0; transform: translateY(-90px) scale(0.8); }
+}
+
+/* Ripple effect */
+.ripple {
+position: fixed;
+border-radius: 50%;
+border: 2px solid rgba(192,57,43,0.6);
+pointer-events: none;
+z-index: 50;
+animation: ripple-out 0.6s ease-out forwards;
+}
+
+@keyframes ripple-out {
+0%   { width: 0; height: 0; opacity: 0.8; transform: translate(-50%, -50%); }
+100% { width: 160px; height: 160px; opacity: 0; transform: translate(-50%, -50%); }
+}
+
+/* Hint text */
+.hint {
+position: fixed;
+bottom: 32px;
+font-size: 0.6rem;
+letter-spacing: 0.4em;
+color: rgba(212,168,71,0.3);
+text-align: center;
+animation: pulse-hint 3s ease-in-out infinite;
+}
+
+@keyframes pulse-hint {
+0%, 100% { opacity: 0.4; }
+50% { opacity: 0.8; }
+}
+
+/* Milestone flash */
+.milestone {
+position: fixed;
+top: 50%;
+left: 50%;
+transform: translate(-50%, -50%);
+font-family: ‘Noto Serif JP’, serif;
+font-size: 1.1rem;
+color: var(–gold);
+letter-spacing: 0.3em;
+pointer-events: none;
+z-index: 200;
+animation: milestone-flash 1.2s ease-out forwards;
+text-align: center;
+white-space: nowrap;
+}
+
+@keyframes milestone-flash {
+0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+20%  { opacity: 1; transform: translate(-50%, -50%) scale(1.05); }
+70%  { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+100% { opacity: 0; transform: translate(-50%, -50%) scale(0.95); }
+}
+</style>
+
+</head>
+<body>
+
+<div class="container">
+  <div class="kanji-label">寿司カウンター</div>
+  <div class="title">Contador de Sushi</div>
+  <div class="subtitle">toca para contar · suma y resta</div>
+
+  <div class="controls-row">
+    <div class="btn-col">
+      <button class="action-btn btn-minus" id="minusBtn">−</button>
+      <div class="btn-label btn-label-minus">RESTAR</div>
+    </div>
+
+```
+<div class="tap-area" id="tapArea">
+  <div class="ring-outer"></div>
+  <div class="ring-middle"></div>
+  <div class="ring-inner"></div>
+  <div class="sushi-btn" id="sushiBtn">🍣</div>
+</div>
+
+<div class="btn-col">
+  <button class="action-btn btn-plus" id="plusBtn">+</button>
+  <div class="btn-label btn-label-plus">SUMAR</div>
+</div>
+```
+
+  </div>
+
+  <div class="counter-wrap">
+    <div class="count-label">piezas</div>
+    <div class="count" id="count">0</div>
+    <div class="count-unit">個 · unidades</div>
+    <div class="divider"></div>
+  </div>
+
+<button class="reset-btn" id="resetBtn">↺   Reiniciar</button>
+
+</div>
+
+<div class="hint">🍣 TOCA EL SUSHI PARA SUMAR · USA LOS BOTONES PARA +/−</div>
+
+<script>
+  let count = 0;
+  const countEl = document.getElementById('count');
+  const tapArea = document.getElementById('tapArea');
+  const sushiBtn = document.getElementById('sushiBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const plusBtn  = document.getElementById('plusBtn');
+  const minusBtn = document.getElementById('minusBtn');
+
+  const milestones = {
+    10:  '🎉 ¡10 piezas!',
+    25:  '🔥 ¡25 piezas!',
+    50:  '🏆 ¡Medio centenar!',
+    100: '🎊 ¡100 piezas! 王',
+    200: '💯 ¡Increíble! 200',
+    500: '🌟 ¡500! Leyenda',
+  };
+
+  function spawnParticle(x, y, isAdd) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.textContent = isAdd ? '+1' : '−1';
+    p.style.color = isAdd ? 'var(--gold)' : '#e07060';
+    p.style.textShadow = isAdd
+      ? '0 0 20px rgba(212,168,71,0.6)'
+      : '0 0 20px rgba(224,112,96,0.6)';
+    p.style.left = (x + (Math.random() * 40 - 20)) + 'px';
+    p.style.top  = (y - 20) + 'px';
+    document.body.appendChild(p);
+    setTimeout(() => p.remove(), 900);
+  }
+
+  function spawnRipple(x, y, isAdd) {
+    const r = document.createElement('div');
+    r.className = 'ripple';
+    r.style.left = x + 'px';
+    r.style.top  = y + 'px';
+    r.style.borderColor = isAdd ? 'rgba(212,168,71,0.5)' : 'rgba(192,57,43,0.6)';
+    document.body.appendChild(r);
+    setTimeout(() => r.remove(), 650);
+  }
+
+  function showMilestone(msg) {
+    const m = document.createElement('div');
+    m.className = 'milestone';
+    m.textContent = msg;
+    document.body.appendChild(m);
+    setTimeout(() => m.remove(), 1300);
+  }
+
+  function animateCount(isAdd) {
+    const cls = isAdd ? 'bump-up' : 'bump-down';
+    countEl.classList.remove('bump-up', 'bump-down');
+    void countEl.offsetWidth;
+    countEl.classList.add(cls);
+  }
+
+  function pressSushi() {
+    sushiBtn.classList.add('pressed');
+    tapArea.classList.add('pressed');
+    setTimeout(() => {
+      sushiBtn.classList.remove('pressed');
+      tapArea.classList.remove('pressed');
+    }, 150);
+  }
+
+  function increment(x, y) {
+    count++;
+    countEl.textContent = count;
+    animateCount(true);
+    spawnParticle(x, y, true);
+    spawnRipple(x, y, true);
+    if (milestones[count]) showMilestone(milestones[count]);
+    pressSushi();
+  }
+
+  function decrement(x, y) {
+    if (count <= 0) return;
+    count--;
+    countEl.textContent = count;
+    animateCount(false);
+    spawnParticle(x, y, false);
+    spawnRipple(x, y, false);
+  }
+
+  // Sushi tap = +1
+  tapArea.addEventListener('click', (e) => {
+    e.stopPropagation();
+    increment(e.clientX, e.clientY);
+  });
+  tapArea.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const t = e.touches[0];
+    increment(t.clientX, t.clientY);
+  }, { passive: false });
+
+  // Plus button
+  function handlePlus(x, y) { increment(x, y); }
+  plusBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    plusBtn.classList.add('pressed');
+    setTimeout(() => plusBtn.classList.remove('pressed'), 150);
+    handlePlus(e.clientX, e.clientY);
+  });
+  plusBtn.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    plusBtn.classList.add('pressed');
+    setTimeout(() => plusBtn.classList.remove('pressed'), 150);
+    const t = e.touches[0];
+    handlePlus(t.clientX, t.clientY);
+  }, { passive: false });
+
+  // Minus button
+  function handleMinus(x, y) { decrement(x, y); }
+  minusBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    minusBtn.classList.add('pressed');
+    setTimeout(() => minusBtn.classList.remove('pressed'), 150);
+    handleMinus(e.clientX, e.clientY);
+  });
+  minusBtn.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    minusBtn.classList.add('pressed');
+    setTimeout(() => minusBtn.classList.remove('pressed'), 150);
+    const t = e.touches[0];
+    handleMinus(t.clientX, t.clientY);
+  }, { passive: false });
+
+  // Reset
+  resetBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    count = 0;
+    countEl.textContent = '0';
+  });
+</script>
+
+</body>
+</html>
